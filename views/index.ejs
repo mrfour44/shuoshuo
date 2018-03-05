@@ -26,16 +26,16 @@
       <div class="container">
         <% if (login == '1') { %>
           <div class="row">
-            <div class="col-md-1">
+            <div class="col-md-1 col-sm-2 col-xs-4">
               <a href="/setavatar">
                 <img src="/<%=avatar%>" alt="" width="100">
               </a>
             </div>
-            <div class="col-md-1" style="margin-left: 20px">
+            <div class="col-md-1 col-sm-2 col-xs-2" style="margin-left: 20px">
               <%=username%>
             </div>
-            <div class="col-md-6">
-              <textarea name="content" id="content" cols="80" rows="4"></textarea>
+            <div class="col-md-6 col-sm-8 col-xs-8">
+              <textarea name="content" id="content" rows="4" style="width: 100%"></textarea>
               <button class="btn btn-success btn-sm" id="fabiao">发表</button>
             </div>
           </div>
@@ -89,7 +89,7 @@
       <hr>
 
       <footer>
-        <p>&copy; 2016 Company, Inc.</p>
+        <p>&copy; 2018 Company, Inc.</p>
       </footer>
     </div>
     <!-- /container -->
