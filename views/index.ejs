@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- 上述3个meta标签*必须*放在最前面，任何其他内容都*必须*跟随其后！ -->
+  <meta name="description" content="">
+  <meta name="author" content="">
+  <link rel="icon" href="/favicon.ico">
+
+  <title>班级说说</title>
+
+  <!-- Bootstrap core CSS -->
+  <link href="/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Custom styles for this template -->
+  <link href="/css/jumbotron.css" rel="stylesheet">
+
+</head>
+
+<body>
+  <%include header.ejs %>
+    <!-- Main jumbotron for a primary marketing message or call to action -->
+    <div class="jumbotron">
+      <div class="container">
+        <% if (login == '1') { %>
+          <div class="row">
+            <div class="col-md-1">
+              <a href="/setavatar">
+                <img src="/<%=avatar%>" alt="" width="100">
+              </a>
+            </div>
+            <div class="col-md-1" style="margin-left: 20px">
+              <%=username%>
+            </div>
+            <div class="col-md-6">
+              <textarea name="content" id="content" cols="80" rows="4"></textarea>
+              <button class="btn btn-success btn-sm" id="fabiao">发表</button>
+            </div>
+          </div>
+          <% } else { %>
+            <div class="row">
+              <div class="col-md-6">
+                <h1>欢迎来到班级说说</h1>
+                <p>随便说说</p>
+              </div>
+              <div class="col-md-6">
+                <h4>欢迎登录</h4>
+                <form>
+                  <div class="form-group">
+                    <label for="username">用户名</label>
+                    <input type="text" class="form-control" id="username" placeholder="用户名可以为中文">
+                  </div>
+                  <div class="form-group">
+                    <label for="password">密码</label>
+                    <input type="password" class="form-control" id="password" placeholder="密码不能少于6位">
+                  </div>
+                  <div class="checkbox">
+                    <label>
+                      <input type="checkbox" checked> 同意班级说说登录协议
+                    </label>
+                  </div>
+                  <button type="button" id="login-btn" class="btn btn-default">登录</button>
+                </form>
+              </div>
+            </div>
+            <% } %>
+      </div>
+    </div>
+    <div class="container">
+      <nav aria-label="Page navigation" id="PageNavigation">
+        <ul class="pagination"></ul>
+      </nav>
+    </div>
+    <div class="container">
+      <!-- Example row of columns -->
+      <div class="row" id="shuoshuoList">
+        <script type="x-tmpl-mustache" id="content-temp">
+            {{#arr}}
+            <div class="col-md-4" style="height:200px;border-bottom:1px solid #ccc;overflow: hidden;padding-bottom: 10px;">
+              <h2><img src="/{{avatar}}" alt="" width="30" style="margin-right: 10px;">{{username}} 说:</h2>
+              <p style="overflow:hidden;text-overflow:ellipsis;max-height:120px">{{content}}</p> 
+            </div>
+            {{/arr}}
+        </script>
+      </div>
+
+      <hr>
+
+      <footer>
+        <p>&copy; 2016 Company, Inc.</p>
+      </footer>
+    </div>
+    <!-- /container -->
+
+
+    <!-- Bootstrap core JavaScript-->
+    <!-- Placed at the end of the document so the pages load faster -->
+    <script src="/js/jquery.min.js"></script>
+    <script src="/js/bootstrap.min.js"></script>
+    <script src="/js/mustache.js"></script>
+    <script>
+      // 登录
+      $('#login-btn').click(function () {
+        $.post('/dologin', {
+          'username': $('#username').val(),
+          'password': $('#password').val()
+        }, function (data) {
+          if (data === '-1') {
+            alert('没有该用户');
+          } else if (data === '-2') {
+            alert('密码错误');
+          } else if (data === '1') {
+            alert('登陆成功');
+            window.location = '/';
+          }
+        })
+      })
+      // 发表
+      $('#fabiao').click(function () {
+        $.post('/dopost', {
+          'content': $('#content').val()
+        }, function (data) {
+          if (data === '1') {
+            alert('发表成功');
+            $('#content').val('');
+            window.location.reload();
+          }
+        })
+      })
+      var template = $('#content-temp').html();
+      // 渲染分页
+      $.get('/allshuoshuocount', function(data) {
+        if (!data) {
+          return;
+        }
+        const PAGESIZE = 9;
+        var totalCount = data.count;
+        var totalPage = Math.ceil(totalCount / PAGESIZE);
+        var str = '';
+        for (var i = 0; i < totalPage; i++ ) {
+          if (i === 0) {
+            str += '<li class="active"><a href="javascript:void(0)">' + (i + 1) + '</a></li>'
+          } else {
+            str += '<li><a href="javascript:void(0)">' + (i + 1) + '</a></li>';
+          }
+        }
+        $('#PageNavigation ul').html(str);
+      })
+      // 分页监听
+      $(document).on('click', '#PageNavigation ul li', function() {
+        var page = $(this).find('a').text() - 1;
+        if ($(this).hasClass('active')) {
+          return;
+        }
+        $(this).addClass('active').siblings().removeClass('active');
+        getList(page);
+      })
+      // 获取全部说说
+      getList(0);
+      function getList(page) {
+        $.ajax({
+          type: 'get',
+          url: '/getallshuoshuo',
+          data: {
+            'page': page
+          },
+          dataType: 'json',
+          success: function (data) {
+            var arr = []
+            iterator(0);
+            function iterator(i) {
+              if (i == data.r.length) {
+                var obj = {
+                  'arr': arr
+                }
+                var rendered = Mustache.render(template, obj);
+                $('#shuoshuoList').html(rendered);
+                return;
+              }
+              var username = data.r[i].username;
+              $.ajax({
+                type: 'get',
+                url: '/getuserinfo',
+                data: {
+                  'username': username
+                },
+                dataType: 'json',
+                success: function (data2) {
+                  var result = Object.assign({}, data.r[i], { 'avatar': data2.r[0].avatar });
+                  arr.push(result);
+                  iterator(i + 1);
+                }
+              })
+            }
+          }
+        })
+      }
+    </script>
+</body>
+
+</html>
